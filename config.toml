@@ -1,0 +1,25 @@
+[app]
+name = "DPSK"
+version = "1.0.0"
+port = ":8080"
+env = "development" # pro/dev/test
+
+[log]
+level = "info" # debug/info/warn/error/fatal
+format = "text" # json/text
+output = "file" # file/stdout/both
+path = "./app.log"
+max_size = 100 # MB
+max_backups = 7
+max_age = 30 # days
+compress = true
+
+[database]
+host = "47.109.106.188"
+port = 3306
+user = "miajio"
+password = "C3p0&MySql"
+name = "dpsk"
+max_idle_conns = 10
+max_open_conns = 100
+conn_max_lifetime = "5m"
