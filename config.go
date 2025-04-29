@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/miajio/dpsk/pkg/cache"
 	"github.com/miajio/dpsk/pkg/database"
 	"github.com/miajio/dpsk/pkg/logger"
 )
@@ -8,6 +9,7 @@ import (
 type Config struct {
 	App      AppConfig               `toml:"app" json:"app"`           // 应用配置
 	Log      logger.LogConfig        `toml:"log" json:"log"`           // 日志配置
+	Redis    cache.RedisConfig       `toml:"redis" json:"redis"`       // redis配置
 	Database database.DatabaseConfig `toml:"database" json:"database"` // 数据库配置
 }
 
