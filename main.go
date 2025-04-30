@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/miajio/dpsk/comm/ctx"
 	"github.com/miajio/dpsk/comm/log"
+	"github.com/miajio/dpsk/middleware"
 	"github.com/miajio/dpsk/pkg/config"
 )
 
@@ -31,6 +32,13 @@ func init() {
 	} else {
 		ctx.DB = db
 	}
+
+	// 设置Gin模式
+	if cfg.App.Env == "prod" {
+		gin.SetMode(gin.ReleaseMode)
+	} else {
+		gin.SetMode(gin.DebugMode)
+	}
 }
 
 func main() {
@@ -43,6 +51,12 @@ func main() {
 		port = ":8080"
 	}
 	log.Infof("服务启动，监听端口 %s", port)
+
+	r.Use(
+		middleware.CORS(),
+		middleware.Recovery(),
+	)
+
 	if err := r.Run(port); err != nil {
 		log.Fatalf("服务启动失败: %v", err)
 	}

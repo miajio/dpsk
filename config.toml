@@ -2,7 +2,7 @@
 name = "DPSK"
 version = "1.0.0"
 port = ":8080"
-env = "development" # pro/dev/test
+env = "dev" # prod/dev/test
 
 [log]
 level = "info" # debug/info/warn/error/fatal

@@ -12,6 +12,10 @@ func SetLogger(logger *zap.Logger) {
 	log = logger
 }
 
+func GetLogger() *zap.Logger {
+	return log
+}
+
 func Debug(msg string, fields ...zap.Field) {
 	log.Debug(msg, fields...)
 }

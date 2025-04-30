@@ -70,14 +70,42 @@ func (r *RedisClient) Delete(key string) error {
 	return r.Client.Del(ctx, key).Err()
 }
 
-// AtomicIncr 原子递增
-func (r *RedisClient) AtomicIncr(key string) (int64, error) {
+// Lock  加锁
+func (r *RedisClient) Lock(key string, value string, expiration time.Duration) (bool, error) {
 	ctx := context.Background()
-	return r.Client.Incr(ctx, key).Result()
+	return r.Client.SetNX(ctx, key, value, expiration).Result()
 }
 
-// AtomicDecr 原子递减
-func (r *RedisClient) AtomicDecr(key string) (int64, error) {
+const (
+	LUA_UNLOCK = `if redis.call("get", KEYS[1]) == ARGV[1] then
+	return redis.call("del", KEYS[1])
+else
+	return 0
+end
+`
+	LUA_FLUSH_EXPIRE = `if redis.call("get", KEYS[1]) == ARGV[1] then
+	return redis.call("pexpire", KEYS[1], ARGV[2])
+else
+	return 0
+end`
+)
+
+// UnLock 解锁
+func (r *RedisClient) UnLock(key string, value string) error {
 	ctx := context.Background()
-	return r.Client.Decr(ctx, key).Result()
+	_, err := r.Client.Eval(ctx, LUA_UNLOCK, []string{key}, value).Result()
+	if err != nil && err != redis.Nil {
+		return err
+	}
+	return nil
+}
+
+// FlushExpire 刷新过期时间
+func (r *RedisClient) FlushExpire(key string, value string, expiration time.Duration) error {
+	ctx := context.Background()
+	_, err := r.Client.Eval(ctx, LUA_FLUSH_EXPIRE, []string{key}, value, expiration.Milliseconds()).Result()
+	if err != nil && err != redis.Nil {
+		return err
+	}
+	return nil
 }
