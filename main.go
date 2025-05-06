@@ -2,10 +2,12 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/miajio/dpsk/app/user"
 	"github.com/miajio/dpsk/comm/ctx"
 	"github.com/miajio/dpsk/comm/log"
 	"github.com/miajio/dpsk/middleware"
 	"github.com/miajio/dpsk/pkg/config"
+	"github.com/miajio/dpsk/pkg/router"
 )
 
 var cfg = Config{}
@@ -56,6 +58,11 @@ func main() {
 		middleware.CORS(),
 		middleware.Recovery(),
 	)
+	router := router.NewRouter(r)
+	router.AddController(
+		user.UserController,
+	)
+	router.RegisterAllController()
 
 	if err := r.Run(port); err != nil {
 		log.Fatalf("服务启动失败: %v", err)

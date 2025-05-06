@@ -9,12 +9,14 @@ type Controller interface {
 
 // Router 路由管理器
 type Router struct {
+	e           *gin.Engine
 	controllers []Controller
 }
 
 // NewRouter 创建路由管理器
-func NewRouter() *Router {
+func NewRouter(e *gin.Engine) *Router {
 	return &Router{
+		e:           e,
 		controllers: make([]Controller, 0),
 	}
 }
@@ -25,8 +27,8 @@ func (r *Router) AddController(c ...Controller) {
 }
 
 // RegisterAllController 路由注册所有controller
-func (r *Router) RegisterAllController(e *gin.Engine) {
+func (r *Router) RegisterAllController() {
 	for _, c := range r.controllers {
-		c.Option(e)
+		c.Option(r.e)
 	}
 }
