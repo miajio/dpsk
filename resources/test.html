@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件上传测试界面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        input[type="file"] {
+            width: 100%;
+            padding: 8px 0;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .progress-container {
+            margin-top: 10px;
+            width: 100%;
+            background-color: #f1f1f1;
+            border-radius: 4px;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #4CAF50;
+            border-radius: 4px;
+            width: 0%;
+            text-align: center;
+            line-height: 20px;
+            color: white;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fff;
+            min-height: 100px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .file-list {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .file-list th, .file-list td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .file-list tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .file-list th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            border-radius: 4px 4px 0 0;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 10px 16px;
+            transition: 0.3s;
+            color: black;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            background-color: white;
+        }
+        .active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>文件上传测试界面</h1>
+    
+    <div class="tab">
+        <button class="tablinks active" onclick="openTab(event, 'upload')">文件上传</button>
+        <button class="tablinks" onclick="openTab(event, 'list')">文件列表</button>
+        <button class="tablinks" onclick="openTab(event, 'manage')">文件管理</button>
+    </div>
+    
+    <!-- 文件上传标签页 -->
+    <div id="upload" class="tabcontent active">
+        <div class="section">
+            <h2>普通文件上传</h2>
+            <div class="form-group">
+                <label for="fileType">文件类型:</label>
+                <select id="fileType">
+                    <option value="image">图片</option>
+                    <option value="video">视频</option>
+                    <option value="document">文档</option>
+                    <option value="audio">音频</option>
+                    <option value="other">其他</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="normalFile">选择文件:</label>
+                <input type="file" id="normalFile">
+            </div>
+            <button onclick="uploadNormalFile()">上传文件</button>
+            <div class="progress-container" id="normalProgressContainer" style="display: none;">
+                <div class="progress-bar" id="normalProgressBar">0%</div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>分片文件上传</h2>
+            <div class="form-group">
+                <label for="chunkFileType">文件类型:</label>
+                <select id="chunkFileType">
+                    <option value="image">图片</option>
+                    <option value="video">视频</option>
+                    <option value="document">文档</option>
+                    <option value="audio">音频</option>
+                    <option value="other">其他</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="chunkFile">选择大文件:</label>
+                <input type="file" id="chunkFile">
+            </div>
+            <div class="form-group">
+                <label for="chunkSize">分片大小 (MB):</label>
+                <input type="number" id="chunkSize" value="5" min="1">
+            </div>
+            <button onclick="uploadChunkedFile()">分片上传</button>
+            <div class="progress-container" id="chunkProgressContainer" style="display: none;">
+                <div class="progress-bar" id="chunkProgressBar">0%</div>
+            </div>
+            <div id="chunkStatus"></div>
+        </div>
+    </div>
+    
+    <!-- 文件列表标签页 -->
+    <div id="list" class="tabcontent">
+        <div class="section">
+            <h2>文件列表查询</h2>
+            <div class="form-group">
+                <label for="listFileType">文件类型:</label>
+                <select id="listFileType">
+                    <option value="">全部</option>
+                    <option value="image">图片</option>
+                    <option value="video">视频</option>
+                    <option value="document">文档</option>
+                    <option value="audio">音频</option>
+                    <option value="other">其他</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="listStatus">文件状态:</label>
+                <select id="listStatus">
+                    <option value="">全部</option>
+                    <option value="NORMAL">正常</option>
+                    <option value="DISABLE">禁用</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="listDeleted">删除状态:</label>
+                <select id="listDeleted">
+                    <option value="">全部</option>
+                    <option value="NORMAL">正常</option>
+                    <option value="DELETED">已删除</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="listPathPrefix">路径前缀:</label>
+                <input type="text" id="listPathPrefix" placeholder="例如: image/">
+            </div>
+            <div class="form-group">
+                <label for="listPage">页码:</label>
+                <input type="number" id="listPage" value="1" min="1">
+            </div>
+            <div class="form-group">
+                <label for="listPageSize">每页数量:</label>
+                <input type="number" id="listPageSize" value="10" min="1" max="100">
+            </div>
+            <button onclick="listFiles()">查询文件</button>
+            
+            <div id="fileListResult">
+                <table class="file-list" id="fileListTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>文件名</th>
+                            <th>类型</th>
+                            <th>大小</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fileListBody">
+                        <!-- 文件列表将在这里动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 文件管理标签页 -->
+    <div id="manage" class="tabcontent">
+        <div class="section">
+            <h2>文件管理</h2>
+            <div class="form-group">
+                <label for="fileId">文件ID:</label>
+                <input type="number" id="fileId" min="1">
+            </div>
+            <div class="form-group">
+                <label for="disableReason">禁用原因 (仅禁用操作需要):</label>
+                <input type="text" id="disableReason" placeholder="输入禁用原因">
+            </div>
+            <button onclick="getFileInfo()">获取文件信息</button>
+            <button onclick="downloadFile()">下载文件</button>
+            <button onclick="streamDownloadFile()">流式下载</button>
+            <button onclick="deleteFile()">删除文件</button>
+            <button onclick="disableFile()">禁用文件</button>
+        </div>
+        
+        <div id="fileInfoResult">
+            <h3>文件信息</h3>
+            <pre id="fileInfo"></pre>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>操作结果</h2>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8080/api/files';
+        
+        // 标签页切换
+        function openTab(evt, tabName) {
+            const tabcontent = document.getElementsByClassName("tabcontent");
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            
+            const tablinks = document.getElementsByClassName("tablinks");
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        
+        // 显示结果
+        function showResult(message, isError = false) {
+            const resultDiv = document.getElementById('result');
+            const pre = document.createElement('pre');
+            pre.style.color = isError ? 'red' : 'green';
+            pre.textContent = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
+            resultDiv.appendChild(pre);
+            resultDiv.scrollTop = resultDiv.scrollHeight;
+        }
+        
+        // 清空结果
+        function clearResult() {
+            document.getElementById('result').innerHTML = '';
+        }
+        
+        // 普通文件上传
+        async function uploadNormalFile() {
+            clearResult();
+            const fileInput = document.getElementById('normalFile');
+            const fileType = document.getElementById('fileType').value;
+            
+            if (fileInput.files.length === 0) {
+                showResult('请选择文件', true);
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('file_type', fileType);
+            
+            const progressBar = document.getElementById('normalProgressBar');
+            const progressContainer = document.getElementById('normalProgressContainer');
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressBar.textContent = '0%';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/upload`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    progressBar.style.width = '100%';
+                    progressBar.textContent = '100%';
+                    showResult('上传成功: ' + JSON.stringify(result, null, 2));
+                } else {
+                    throw new Error(result.error || '上传失败');
+                }
+            } catch (error) {
+                showResult(error.message, true);
+            }
+        }
+        
+        // 分片文件上传
+        async function uploadChunkedFile() {
+            clearResult();
+            const fileInput = document.getElementById('chunkFile');
+            const fileType = document.getElementById('chunkFileType').value;
+            const chunkSizeMB = parseInt(document.getElementById('chunkSize').value);
+            
+            if (fileInput.files.length === 0) {
+                showResult('请选择文件', true);
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const chunkSize = chunkSizeMB * 1024 * 1024;
+            const totalChunks = Math.ceil(file.size / chunkSize);
+            const uploadId = generateUUID();
+            
+            const progressBar = document.getElementById('chunkProgressBar');
+            const progressContainer = document.getElementById('chunkProgressContainer');
+            const chunkStatus = document.getElementById('chunkStatus');
+            
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressBar.textContent = '0%';
+            chunkStatus.innerHTML = '';
+            
+            // 计算文件hash (简化版，实际应该使用更可靠的方法)
+            const fileHash = await calculateFileHash(file);
+            
+            showResult(`开始分片上传，共 ${totalChunks} 个分片`);
+            
+            try {
+                // 上传所有分片
+                for (let i = 0; i < totalChunks; i++) {
+                    const start = i * chunkSize;
+                    const end = Math.min(start + chunkSize, file.size);
+                    const chunk = file.slice(start, end);
+                    
+                    const formData = new FormData();
+                    formData.append('chunk', chunk, file.name);
+                    formData.append('chunk_number', i + 1);
+                    formData.append('total_chunks', totalChunks);
+                    formData.append('file_type', fileType);
+                    formData.append('file_name', file.name);
+                    formData.append('file_size', file.size);
+                    formData.append('chunk_size', chunk.size);
+                    formData.append('hash', fileHash);
+                    formData.append('upload_id', uploadId);
+                    
+                    const response = await fetch(`${API_BASE_URL}/upload/chunk`, {
+                        method: 'POST',
+                        body: formData,
+                    });
+                    
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || `分片 ${i + 1} 上传失败`);
+                    }
+                    
+                    const progress = Math.round(((i + 1) / totalChunks) * 100);
+                    progressBar.style.width = `${progress}%`;
+                    progressBar.textContent = `${progress}%`;
+                    
+                    const statusMessage = document.createElement('div');
+                    statusMessage.textContent = `分片 ${i + 1}/${totalChunks} 上传成功`;
+                    chunkStatus.appendChild(statusMessage);
+                }
+                
+                // 所有分片上传完成，通知服务器合并
+                const completeResponse = await fetch(`${API_BASE_URL}/upload/complete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        upload_id: uploadId,
+                        file_type: fileType,
+                        file_name: file.name,
+                        file_size: file.size,
+                        total_chunks: totalChunks,
+                        hash: fileHash
+                    }),
+                });
+                
+                const result = await completeResponse.json();
+                
+                if (completeResponse.ok) {
+                    progressBar.style.width = '100%';
+                    progressBar.textContent = '100%';
+                    showResult('分片上传完成: ' + JSON.stringify(result, null, 2));
+                } else {
+                    throw new Error(result.error || '分片合并失败');
+                }
+            } catch (error) {
+                showResult(error.message, true);
+            }
+        }
+        
+        // 文件列表查询
+        async function listFiles() {
+            clearResult();
+            const fileType = document.getElementById('listFileType').value;
+            const status = document.getElementById('listStatus').value;
+            const deleted = document.getElementById('listDeleted').value;
+            const pathPrefix = document.getElementById('listPathPrefix').value;
+            const page = document.getElementById('listPage').value;
+            const pageSize = document.getElementById('listPageSize').value;
+            
+            let url = `${API_BASE_URL}?page=${page}&page_size=${pageSize}`;
+            
+            if (fileType) url += `&file_type=${fileType}`;
+            if (status) url += `&status=${status}`;
+            if (deleted) url += `&deleted=${deleted}`;
+            if (pathPrefix) url += `&relative_path_prefix=${encodeURIComponent(pathPrefix)}`;
+            
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult(`找到 ${result.total} 个文件`);
+                    renderFileList(result.files);
+                } else {
+                    throw new Error(result.error || '获取文件列表失败');
+                }
+            } catch (error) {
+                showResult(error.message, true);
+            }
+        }
+        
+        // 渲染文件列表
+        function renderFileList(files) {
+            const tbody = document.getElementById('fileListBody');
+            tbody.innerHTML = '';
+            
+            if (!files || files.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="6" style="text-align: center;">没有找到文件</td>';
+                tbody.appendChild(row);
+                return;
+            }
+            
+            files.forEach(file => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${file.id}</td>
+                    <td>${file.name}</td>
+                    <td>${file.type}</td>
+                    <td>${formatFileSize(file.size)}</td>
+                    <td>${file.status === 'NORMAL' ? '正常' : '禁用'}</td>
+                    <td>
+                        <button onclick="viewFileInfo(${file.id})">查看</button>
+                        <button onclick="downloadFileFromList(${file.id})">下载</button>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        // 获取文件信息
+        async function getFileInfo() {
+            clearResult();
+            const fileId = document.getElementById('fileId').value;
+            
+            if (!fileId) {
+                showResult('请输入文件ID', true);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/${fileId}`);
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('fileInfo').textContent = JSON.stringify(result, null, 2);
+                    showResult('获取文件信息成功');
+                } else {
+                    throw new Error(result.error || '获取文件信息失败');
+                }
+            } catch (error) {
+                showResult(error.message, true);
+            }
+        }
+        
+        // 查看文件信息 (从列表)
+        async function viewFileInfo(fileId) {
+            document.getElementById('fileId').value = fileId;
+            await getFileInfo();
+            document.querySelector('.tab button[onclick="openTab(event, \'manage\')"]').click();
+        }
+        
+        // 下载文件
+        async function downloadFile() {
+            clearResult();
+            const fileId = document.getElementById('fileId').value;
+            
+            if (!fileId) {
+                showResult('请输入文件ID', true);
+                return;
+            }
+            
+            try {
+                window.open(`${API_BASE_URL}/download/${fileId}`, '_blank');
+                showResult('开始下载文件');
+            } catch (error) {
+                showResult(error.message, true);
+            }
+        }
+        
+        // 从列表下载文件
+        async function downloadFileFromList(fileId) {
+            document.getElementById('fileId').value = fileId;
+            await downloadFile();
+        }
+        
+        // 流式下载文件
+        async function streamDownloadFile() {
+            clearResult();
+            const fileId = document.getElementById('fileId').value;
+            
+            if (!fileId) {
+                showResult('请输入文件ID', true);
+                return;
+            }
+            
+            try {
+                window.open(`${API_BASE_URL}/stream/${fileId}`, '_blank');
+                showResult('开始流式下载文件');
+            } catch (error) {
+                showResult(error.message, true);
+            }
+        }
+        
+        // 删除文件
+        async function deleteFile() {
+            clearResult();
+            const fileId = document.getElementById('fileId').value;
+            
+            if (!fileId) {
+                showResult('请输入文件ID', true);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id: fileId
+                    }),
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult('文件删除成功: ' + JSON.stringify(result, null, 2));
+                } else {
+                    throw new Error(result.error || '文件删除失败');
+                }
+            } catch (error) {
+                showResult(error.message, true);
+            }
+        }
+        
+        // 禁用文件
+        async function disableFile() {
+            clearResult();
+            const fileId = document.getElementById('fileId').value;
+            const reason = document.getElementById('disableReason').value;
+            
+            if (!fileId) {
+                showResult('请输入文件ID', true);
+                return;
+            }
+            
+            if (!reason) {
+                showResult('请输入禁用原因', true);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/disable`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id: fileId,
+                        reason: reason
+                    }),
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult('文件禁用成功: ' + JSON.stringify(result, null, 2));
+                } else {
+                    throw new Error(result.error || '文件禁用失败');
+                }
+            } catch (error) {
+                showResult(error.message, true);
+            }
+        }
+        
+        // 辅助函数 - 生成UUID
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+        
+        // 辅助函数 - 计算文件hash (简化版)
+        async function calculateFileHash(file) {
+            return new Promise((resolve) => {
+                // 实际应用中应该使用更可靠的hash计算方法
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const content = e.target.result;
+                    // 简化的hash计算，实际应该使用更复杂的算法
+                    let hash = 0;
+                    for (let i = 0; i < content.length; i++) {
+                        hash = (hash << 5) - hash + content.charCodeAt(i);
+                        hash |= 0; // 转换为32位整数
+                    }
+                    resolve(hash.toString(16));
+                };
+                reader.readAsBinaryString(file.slice(0, Math.min(file.size, 65536))); // 只读取前64KB计算hash
+            });
+        }
+        
+        // 辅助函数 - 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>
