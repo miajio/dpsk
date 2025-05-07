@@ -14,6 +14,13 @@ max_backups = 7
 max_age = 30 # days
 compress = true
 
+[sysFile]
+uploadDir = "./uploads"
+baseUrl = "http://localhost:8080/uploads"
+maxUploadSize = 104857600
+minChunkSize = 20971520
+streamDownloadMin = 104857600
+
 [database]
 host = "47.109.106.188"
 port = 3306

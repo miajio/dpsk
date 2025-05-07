@@ -2,10 +2,12 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/miajio/dpsk/app/file"
 	"github.com/miajio/dpsk/app/user"
 	"github.com/miajio/dpsk/comm/ctx"
 	"github.com/miajio/dpsk/comm/log"
 	"github.com/miajio/dpsk/middleware"
+	"github.com/miajio/dpsk/models"
 	"github.com/miajio/dpsk/pkg/config"
 	"github.com/miajio/dpsk/pkg/router"
 )
@@ -23,6 +25,14 @@ func init() {
 		log.SetLogger(logger)
 	}
 
+	ctx.File = &ctx.FileConfig{
+		UploadDir:         cfg.SysFile.UploadDir,
+		BaseUrl:           cfg.SysFile.BaseUrl,
+		MaxUploadSize:     cfg.SysFile.MaxUploadSize,
+		MinChunkSize:      cfg.SysFile.MinChunkSize,
+		StreamDownloadMin: cfg.SysFile.StreamDownloadMin,
+	}
+
 	if redis, err := cfg.Redis.Generator(); err != nil {
 		log.Fatalf("Redis 连接失败: %v", err)
 	} else {
@@ -32,6 +42,10 @@ func init() {
 	if db, err := cfg.Database.Generator(); err != nil {
 		log.Fatalf("数据库连接失败: %v", err)
 	} else {
+		// 自动迁移表结构
+		if err := db.AutoMigrate(&models.SysFile{}, &models.SysChunkFile{}); err != nil {
+			panic("failed to migrate database")
+		}
 		ctx.DB = db
 	}
 
@@ -60,6 +74,7 @@ func main() {
 	)
 	router := router.NewRouter(r)
 	router.AddController(
+		file.FileController,
 		user.UserController,
 	)
 	router.RegisterAllController()
