@@ -15,10 +15,10 @@ max_age = 30 # days
 compress = true
 
 [database]
-host = "47.109.106.188"
+host = "127.0.0.1"
 port = 3306
-user = "miajio"
-password = "C3p0&MySql"
+user = "root"
+password = "123456"
 name = "dpsk"
 max_idle_conns = 10
 max_open_conns = 100
