@@ -7,14 +7,16 @@ import (
 	"time"
 
 	"github.com/miajio/dpsk/pkg/config"
+	"github.com/miajio/dpsk/pkg/database"
+	"github.com/miajio/dpsk/pkg/redis"
 )
 
 // AppConfig 应用整体配置结构
 type AppConfig struct {
-	App      App      `toml:"app"`
-	Log      Log      `toml:"log"`
-	Database Database `toml:"database"`
-	Redis    Redis    `toml:"redis"`
+	App      App                  `toml:"app"`
+	Log      Log                  `toml:"log"`
+	Database database.MySqlConfig `toml:"database"`
+	Redis    redis.RedisConfig    `toml:"redis"`
 }
 
 // App 应用基础配置
@@ -37,26 +39,6 @@ type Log struct {
 	Compress   bool   `toml:"compress"`
 }
 
-// Database 数据库配置
-type Database struct {
-	Host            string        `toml:"host"`
-	Port            int           `toml:"port"`
-	User            string        `toml:"user"`
-	Password        string        `toml:"password"`
-	Name            string        `toml:"name"`
-	MaxIdleConns    int           `toml:"max_idle_conns"`
-	MaxOpenConns    int           `toml:"max_open_conns"`
-	ConnMaxLifetime time.Duration `toml:"conn_max_lifetime"` // 字符串解析为时间间隔
-}
-
-// Redis 配置
-type Redis struct {
-	Addr     string `toml:"addr"`
-	Password string `toml:"password"`
-	DB       int    `toml:"db"`
-	PoolSize int    `toml:"pool_size"`
-}
-
 func TestRead(t *testing.T) {
 	var cfg AppConfig
 
@@ -65,6 +47,12 @@ func TestRead(t *testing.T) {
 		if !ok {
 			return fmt.Errorf("invalid config type")
 		}
+
+		_, err := c.Database.Init()
+		if err != nil {
+			return fmt.Errorf("failed to initialize database: %v", err)
+		}
+
 		log.Printf("Config reloaded! New values: %+v", c)
 		// 这里可以添加你的业务逻辑，比如重新初始化数据库连接等
 		return nil
