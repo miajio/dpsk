@@ -64,6 +64,19 @@ func (rc *RedisClient) Get(ctx context.Context, key string) (string, error) {
 	return rc.client.Get(ctx, key).Result()
 }
 
+// GetWithTTL 获取缓存并返回过期时间
+func (rc *RedisClient) GetWithTTL(ctx context.Context, key string) (string, time.Duration, error) {
+	result, err := rc.client.Get(ctx, key).Result()
+	if err != nil {
+		return "", 0, err
+	}
+	ttl, err := rc.client.TTL(ctx, key).Result()
+	if err != nil {
+		return "", 0, err
+	}
+	return result, ttl, nil
+}
+
 // Del 删除缓存
 func (rc *RedisClient) Del(ctx context.Context, keys ...string) error {
 	return rc.client.Del(ctx, keys...).Err()

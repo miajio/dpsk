@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/miajio/dpsk/internal/errors"
 	"github.com/miajio/dpsk/internal/model"
+	"github.com/miajio/dpsk/pkg/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -28,6 +29,13 @@ func (r *userRepository) Register(account, nickname, password string) error {
 	if err := r.db.Where("account = ?", account).First(&userModel).Error; err == nil {
 		return errors.ErrAccountExisted
 	}
+
+	if hashPassword, err := bcrypt.Gen(password); err != nil {
+		return err
+	} else {
+		password = hashPassword
+	}
+
 	return r.db.Create(&model.UserModel{
 		Account:  account,
 		Nickname: nickname,
@@ -38,10 +46,10 @@ func (r *userRepository) Register(account, nickname, password string) error {
 func (r *userRepository) Login(account, password string) (*model.UserModel, error) {
 	var userModel model.UserModel
 	if err := r.db.Where("account = ?", account).First(&userModel).Error; err != nil {
-		return nil, errors.New("账号不存在")
+		return nil, errors.ErrAccountNotExisted
 	}
-	if userModel.Password != password {
-		return nil, errors.New("密码错误")
+	if !bcrypt.Check(password, userModel.Password) {
+		return nil, errors.ErrPasswordError
 	}
 	return &userModel, nil
 }

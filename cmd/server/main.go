@@ -6,49 +6,71 @@ import (
 
 	"github.com/miajio/dpsk/internal/cache"
 	"github.com/miajio/dpsk/internal/model"
+	"github.com/miajio/dpsk/internal/routes"
 	"github.com/miajio/dpsk/pkg/config"
 	"go.uber.org/zap"
 )
 
+var (
+	isInit bool
+	route  *routes.Route
+)
+
 func cfgInit(config any) error {
-	c, ok := config.(*AppConfig)
+	c, ok := config.(*Config)
 	if !ok {
 		return fmt.Errorf("配置类型无效")
 	}
-	cache.Log = c.Log.Init()
-	var err error
-	cache.DB, err = c.Database.Init()
-	if err != nil {
-		zap.L().Sugar().Fatalf("数据库初始化失败: %v", err)
-		// log.Fatalf("数据库初始化失败: %v", err)
-	}
-	if err := cache.DB.AutoMigrate(model.UserModel{}); err != nil {
-		zap.L().Sugar().Fatalf("数据库迁移失败: %v", err)
-		// log.Fatalf("数据库迁移失败: %v", err)
-	}
-	cache.RedisClient, err = c.Redis.Init()
-	if err != nil {
-		zap.L().Sugar().Fatalf("Redis初始化失败: %v", err)
-		// log.Fatalf("Redis初始化失败: %v", err)
+	if !isInit {
+		c.Log.Init()
+		var err error
+		cache.DB, err = c.Database.Init()
+		if err != nil {
+			zap.S().Fatalf("数据库初始化失败: %v", err)
+		} else {
+			zap.L().Info("数据库初始化成功")
+		}
+		if err := cache.DB.AutoMigrate(model.UserModel{}); err != nil {
+			zap.S().Fatalf("数据库迁移失败: %v", err)
+		} else {
+			zap.L().Info("数据库迁移成功")
+		}
+		cache.RedisClient, err = c.Redis.Init()
+		if err != nil {
+			zap.S().Fatalf("Redis初始化失败: %v", err)
+		} else {
+			zap.L().Info("Redis初始化成功")
+		}
+
+		route = routes.NewRoute(routes.AppConfig{
+			Name:    c.App.Name,
+			Version: c.App.Version,
+			Port:    c.App.Port,
+			Env:     c.App.Env,
+		})
+
+		cache.JWT = &c.JWT
+
+		isInit = true
 	}
 
-	cache.AppConfig = &c.App
+	route.SetName(c.App.Name)
+	route.SetVersion(c.App.Version)
 	return nil
 }
 
 func init() {
-	cfg := AppConfig{}
-	cm, err := config.NewConfigManager("../../config.toml", &cfg, cfgInit)
+	cfg := Config{}
+	_, err := config.NewConfigManager("../../config.toml", &cfg, cfgInit)
 	if err != nil {
 		log.Fatalf("Failed to initialize config manager: %v", err)
 	}
-	cfgInit(cm.GetConfig())
 }
 
 func main() {
-	route := cache.AppConfig.SetupRouter(cache.DB)
+	router := route.SetupRouter(cache.DB)
 	// 启动服务器
-	if err := route.Run(cache.AppConfig.Port); err != nil {
+	if err := router.Run(route.GetPort()); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }

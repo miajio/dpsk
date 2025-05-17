@@ -15,14 +15,34 @@ import (
 
 // App 应用基础配置
 type AppConfig struct {
-	Name    string `toml:"name" yaml:"name"`
-	Version string `toml:"version" yaml:"version"`
-	Port    string `toml:"port" yaml:"port"`
-	Env     string `toml:"env" yaml:"env"` // prod/dev/test
+	Name    string
+	Version string
+	Port    string
+	Env     string // prod/dev/test
 }
 
-func (app *AppConfig) SetupRouter(db *gorm.DB) *gin.Engine {
-	if app.Env == "prod" {
+type Route struct {
+	cfg AppConfig
+}
+
+func NewRoute(app AppConfig) *Route {
+	return &Route{app}
+}
+
+func (app *Route) SetName(name string) {
+	app.cfg.Name = name
+}
+
+func (app *Route) SetVersion(version string) {
+	app.cfg.Version = version
+}
+
+func (app *Route) GetPort() string {
+	return app.cfg.Port
+}
+
+func (app *Route) SetupRouter(db *gorm.DB) *gin.Engine {
+	if app.cfg.Env == "prod" {
 		gin.SetMode(gin.ReleaseMode)
 	} else {
 		gin.SetMode(gin.DebugMode)
@@ -30,22 +50,25 @@ func (app *AppConfig) SetupRouter(db *gorm.DB) *gin.Engine {
 	router := gin.New()
 
 	// 中间件
-	router.Use(middleware.VersionMiddleware(app.Version))
+	router.Use(middleware.GinLogger())
+	router.Use(middleware.GinRecovery(true))
+	router.Use(middleware.VersionMiddleware(app.cfg.Version))
 	router.Use(middleware.ErrorHandler())
 	router.Use(cors.Default())
+
 	app.register(router, db)
 	return router
 }
 
-func (app *AppConfig) register(router *gin.Engine, db *gorm.DB) {
+func (app *Route) register(router *gin.Engine, db *gorm.DB) {
 	router.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, dto.NewBaseResponse(http.StatusOK, "pong", nil, nil))
 	})
 	router.GET("/env", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, dto.NewBaseResponse(http.StatusOK, "success", map[string]any{
-			"name":    app.Name,
-			"env":     app.Env,
-			"version": app.Version,
+			"name":    app.cfg.Name,
+			"env":     app.cfg.Env,
+			"version": app.cfg.Version,
 		}, nil))
 	})
 
@@ -59,6 +82,12 @@ func (app *AppConfig) register(router *gin.Engine, db *gorm.DB) {
 		{
 			public.POST("/login", userController.Login)
 			public.POST("/register", userController.Register)
+		}
+
+		// 私有路由
+		private := api.Group("/private").Use(middleware.TokenMiddleware())
+		{
+			private.GET("/logout", userController.Logout)
 		}
 	}
 }

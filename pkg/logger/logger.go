@@ -21,7 +21,7 @@ type LoggerConfig struct {
 	Compress   bool   `toml:"compress" yaml:"compress"`       // 是否压缩/归档旧日志文件
 }
 
-func (cfg *LoggerConfig) Init() *zap.Logger {
+func (cfg *LoggerConfig) Init() {
 	// 设置日志级别
 	var level zapcore.Level
 	switch cfg.Level {
@@ -106,5 +106,4 @@ func (cfg *LoggerConfig) Init() *zap.Logger {
 
 	// 替换zap全局Logger
 	zap.ReplaceGlobals(log)
-	return log
 }

@@ -1,15 +1,19 @@
 package cache
 
 import (
-	"github.com/miajio/dpsk/internal/routes"
+	"time"
+
 	"github.com/miajio/dpsk/pkg/redis"
-	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
 var (
 	RedisClient *redis.RedisClient
 	DB          *gorm.DB
-	Log         *zap.Logger
-	AppConfig   *routes.AppConfig
+	JWT         *JWTConfig
 )
+
+type JWTConfig struct {
+	Prefix  string        `toml:"prefix" yaml:"prefix"`   // token前缀
+	Expires time.Duration `toml:"expires" yaml:"expires"` // token过期时间
+}

@@ -29,3 +29,7 @@ addr = "localhost:6379"
 password = ""
 db = 0
 pool_size = 20
+
+[jwt]
+prefix = "Authorization:"
+expires = "24h"
