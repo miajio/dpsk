@@ -15,4 +15,5 @@ type Config struct {
 	Database database.MySqlConfig `toml:"database" yaml:"database"`
 	Redis    redis.RedisConfig    `toml:"redis" yaml:"redis"`
 	JWT      cache.JWTConfig      `toml:"jwt" yaml:"jwt"`
+	File     cache.FileConfig     `toml:"file" yaml:"file"`
 }

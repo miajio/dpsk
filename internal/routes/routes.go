@@ -73,15 +73,22 @@ func (app *Route) register(router *gin.Engine, db *gorm.DB) {
 	})
 
 	userController := controller.NewUserController(service.NewUserService(repository.NewUserRepository(db)))
+	fileController := controller.NewFileController(service.NewFileService(repository.NewFileRepository(db)))
 
 	// API路由组
 	api := router.Group("/api")
 	{
 		// 公共路由
-		public := api.Group("/auth")
+		authPublic := api.Group("/auth")
 		{
-			public.POST("/login", userController.Login)
-			public.POST("/register", userController.Register)
+			authPublic.POST("/login", userController.Login)
+			authPublic.POST("/register", userController.Register)
+		}
+
+		// 文件路由
+		filePublic := api.Group("/file")
+		{
+			filePublic.POST("/upload", fileController.Upload)
 		}
 
 		// 私有路由

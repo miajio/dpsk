@@ -18,9 +18,7 @@ type userRepository struct {
 
 // NewUserRepository 创建用户数据库操作对象
 func NewUserRepository(db *gorm.DB) UserRepository {
-	return &userRepository{
-		db: db,
-	}
+	return &userRepository{db: db}
 }
 
 func (r *userRepository) Register(account, nickname, password string) error {
@@ -49,7 +47,7 @@ func (r *userRepository) Login(account, password string) (*model.UserModel, erro
 		return nil, errors.ErrAccountNotExisted
 	}
 	if !bcrypt.Check(password, userModel.Password) {
-		return nil, errors.ErrPasswordError
+		return nil, errors.ErrPassword
 	}
 	return &userModel, nil
 }

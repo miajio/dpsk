@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/miajio/dpsk/internal/cache"
 	"github.com/miajio/dpsk/internal/model"
@@ -30,7 +31,7 @@ func cfgInit(config any) error {
 		} else {
 			zap.L().Info("数据库初始化成功")
 		}
-		if err := cache.DB.AutoMigrate(model.UserModel{}); err != nil {
+		if err := cache.DB.AutoMigrate(model.UserModel{}, model.FileModel{}); err != nil {
 			zap.S().Fatalf("数据库迁移失败: %v", err)
 		} else {
 			zap.L().Info("数据库迁移成功")
@@ -50,6 +51,12 @@ func cfgInit(config any) error {
 		})
 
 		cache.JWT = &c.JWT
+		cache.File = &c.File
+
+		// 文件目录创建
+		if err := os.MkdirAll(c.File.Savepath, os.ModePerm); err != nil {
+			zap.S().Fatalf("文件目录创建失败: %v", err)
+		}
 
 		isInit = true
 	}

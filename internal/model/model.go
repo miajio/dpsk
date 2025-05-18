@@ -7,12 +7,12 @@ import (
 )
 
 type Model struct {
-	Id           int64  `gorm:"primaryKey"`
-	CreateUserId int64  `gorm:"default:0"`                                       // 创建人
-	CreateTime   int64  `gorm:"autoCreateTime:nano"`                             // 创建时间
-	ModifyUserId int64  `gorm:"default:0"`                                       // 修改人
-	ModifyTime   int64  `gorm:"default:0"`                                       // 修改时间
-	IsDeleted    string `gorm:"type:enum('NORMAL', 'DELETED') default 'NORMAL'"` // 删除状态 NORMAL 正常 DELETED 删除
+	Id           int64  `gorm:"column:id;type:bigint;primaryKey"`
+	CreateUserId int64  `gorm:"column:createUserId;type:bigint;default:0"`                        // 创建人
+	CreateTime   int64  `gorm:"column:createTime;type:bigint;autoCreateTime:nano"`                // 创建时间
+	ModifyUserId int64  `gorm:"column:modifyUserId;type:bigint;default:0"`                        // 修改人
+	ModifyTime   int64  `gorm:"column:modifyTime;type:bigint;default:0"`                          // 修改时间
+	IsDeleted    string `gorm:"column:isDeleted;type:enum('NORMAL', 'DELETED') default 'NORMAL'"` // 删除状态 NORMAL 正常 DELETED 删除
 }
 
 func (m *Model) BeforeCreate(tx *gorm.DB) (err error) {
