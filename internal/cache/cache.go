@@ -20,7 +20,7 @@ type JWTConfig struct {
 }
 
 type FileConfig struct {
-	Savepath string `toml:"savepath" yaml:"savepath"` // 文件存储路径
-	Filepath string `toml:"filepath" yaml:"filepath"` // 文件存储路径-系统文件前缀
-	Url      string `toml:"url" yaml:"url"`           // 文件访问路径
+	SavePath string `toml:"save_path" yaml:"save_path"` // 文件存储路径
+	FilePath string `toml:"file_path" yaml:"file_path"` // 文件存储路径-系统文件前缀
+	Url      string `toml:"url" yaml:"url"`             // 文件访问路径
 }

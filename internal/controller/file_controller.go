@@ -71,15 +71,15 @@ func (c *fileController) Upload(ctx *gin.Context) {
 	}
 	fileName := uuid.New().String() + suffix
 
-	savepath := filepath.Join(cache.File.Savepath, fileName)
-	if err := ctx.SaveUploadedFile(file, savepath); err != nil {
+	savePath := filepath.Join(cache.File.SavePath, fileName)
+	if err := ctx.SaveUploadedFile(file, savePath); err != nil {
 		ctx.JSON(http.StatusOK, dto.NewBaseResponse(http.StatusInternalServerError, "文件上传失败", nil, err))
 		return
 	}
 
 	fileModel := &model.FileModel{
 		Name:         filepath.Base(file.Filename),                 // 文件名称
-		Path:         filepath.Join(cache.File.Filepath, fileName), // 文件存储路径
+		Path:         filepath.Join(cache.File.FilePath, fileName), // 文件存储路径
 		Url:          cache.File.Url + fileName,                    // 文件访问地址
 		Size:         file.Size,                                    // 文件大小
 		Hash:         hash,                                         // 文件哈希值

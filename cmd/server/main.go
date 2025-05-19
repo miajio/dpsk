@@ -9,8 +9,21 @@ import (
 	"github.com/miajio/dpsk/internal/model"
 	"github.com/miajio/dpsk/internal/routes"
 	"github.com/miajio/dpsk/pkg/config"
+	"github.com/miajio/dpsk/pkg/database"
+	"github.com/miajio/dpsk/pkg/logger"
+	"github.com/miajio/dpsk/pkg/redis"
 	"go.uber.org/zap"
 )
+
+// Config 应用整体配置结构
+type Config struct {
+	App      routes.AppConfig     `toml:"app" yaml:"app"`
+	Log      logger.LoggerConfig  `toml:"log" yaml:"log"`
+	Database database.MySqlConfig `toml:"database" yaml:"database"`
+	Redis    redis.RedisConfig    `toml:"redis" yaml:"redis"`
+	JWT      cache.JWTConfig      `toml:"jwt" yaml:"jwt"`
+	File     cache.FileConfig     `toml:"file" yaml:"file"`
+}
 
 var (
 	isInit bool
@@ -48,13 +61,13 @@ func cfgInit(config any) error {
 			Version: c.App.Version,
 			Port:    c.App.Port,
 			Env:     c.App.Env,
-		})
+		}, cache.DB)
 
 		cache.JWT = &c.JWT
 		cache.File = &c.File
 
 		// 文件目录创建
-		if err := os.MkdirAll(c.File.Savepath, os.ModePerm); err != nil {
+		if err := os.MkdirAll(c.File.SavePath, os.ModePerm); err != nil {
 			zap.S().Fatalf("文件目录创建失败: %v", err)
 		}
 
@@ -68,16 +81,14 @@ func cfgInit(config any) error {
 
 func init() {
 	cfg := Config{}
-	_, err := config.NewConfigManager("../../config.toml", &cfg, cfgInit)
+	// 获取运行目录
+	_, err := config.NewConfigManager("config.toml", &cfg, cfgInit)
 	if err != nil {
 		log.Fatalf("Failed to initialize config manager: %v", err)
 	}
 }
 
 func main() {
-	router := route.SetupRouter(cache.DB)
-	// 启动服务器
-	if err := router.Run(route.GetPort()); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
-	}
+	route.SetupRouter()
+	route.Start()
 }

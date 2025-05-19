@@ -35,6 +35,6 @@ prefix = "Authorization:"
 expires = "24h"
 
 [file]
-savepath = "../../uploads"
-filepath = "/uploads"
+save_path = "../../uploads"
+file_path = "/uploads"
 url = "http://localhost:8080/uploads/"
