@@ -62,6 +62,8 @@ func (c *Client) makeRequest(ctx context.Context, method, endpoint string, body 
 		reqBody = bytes.NewBuffer(jsonBody)
 	}
 
+	fmt.Println("request body is:", reqBody)
+
 	req, err := http.NewRequestWithContext(ctx, method, c.baseUrl+endpoint, reqBody)
 	if err != nil {
 		return nil, err
@@ -94,7 +96,7 @@ func (c *Client) GetModels(ctx context.Context) (*ModelList, error) {
 
 // GetBalance 获取账户余额
 func (c *Client) GetBalance(ctx context.Context) (*Balance, error) {
-	resp, err := c.makeRequest(ctx, http.MethodGet, "/models", nil)
+	resp, err := c.makeRequest(ctx, http.MethodGet, "/user/balance", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +117,7 @@ func (c *Client) Chat(ctx context.Context, req ChatRequest) (*ChatCompletion, er
 	if req.Stream {
 		return nil, errors.New("streaming is not supported, use ChatStream instead")
 	}
-	resp, err := c.makeRequest(ctx, http.MethodPost, "/chat/completions", req)
+	resp, err := c.makeRequest(ctx, http.MethodPost, "/chat/completions", &req)
 	if err != nil {
 		return nil, err
 	}
@@ -131,16 +133,15 @@ func (c *Client) Chat(ctx context.Context, req ChatRequest) (*ChatCompletion, er
 }
 
 // ChatStream 发送流式请求
-func (c *Client) ChatStream(ctx context.Context, req ChatRequest) (chan<- ChatCompletion, chan<- error, error) {
+func (c *Client) ChatStream(ctx context.Context, req ChatRequest) (<-chan ChatCompletion, <-chan error, error) {
 	if !req.Stream {
 		return nil, nil, errors.New("stream is not enabled")
 	}
 
-	resp, err := c.makeRequest(ctx, http.MethodPost, "/chat/completions", req)
+	resp, err := c.makeRequest(ctx, http.MethodPost, "/chat/completions", &req)
 	if err != nil {
 		return nil, nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, nil, fmt.Errorf("failed to chat stream: %s", resp.Status)
@@ -150,6 +151,7 @@ func (c *Client) ChatStream(ctx context.Context, req ChatRequest) (chan<- ChatCo
 	resChain := make(chan ChatCompletion)
 
 	go func() {
+		defer resp.Body.Close()
 		defer close(resChain)
 		defer close(errChan)
 		scanner := bufio.NewScanner(resp.Body)

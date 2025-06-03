@@ -84,24 +84,24 @@ type Tool struct {
 
 // ChatRequest 对话请求结构体
 type ChatRequest struct {
-	Messages []Message `json:"message"` // 消息
-	Model    string    `json:"model"`   // 使用的模型
+	Messages []Message `json:"messages"` // 消息
+	Model    string    `json:"model"`    // 使用的模型
 	// 介于 -2.0 和 2.0 之间的数字.如果该值为正, 那么新 token 会根据其在已有文本中的出现频率受到相应的惩罚,降低模型重复相同内容的可能性.
 	FrequencyPenalty float64 `json:"frequency_penalty,omitempty"`
 	// 介于 1 到 8192 间的整数,限制一次请求中模型生成 completion 的最大 token 数.输入 token 和输出 token 的总长度受模型的上下文长度的限制.如未指定 max_tokens参数,默认使用 4096.
 	MaxTokens int `json:"max_tokens,omitempty"`
 	// 介于 -2.0 和 2.0 之间的数字.如果该值为正,那么新 token 会根据其是否已在已有文本中出现受到相应的惩罚,从而增加模型谈论新主题的可能性.
-	PresencePenalty float64        `json:"presence_penalty,omitempty"`
-	ResponseFormat  ResponseFormat `json:"response_format,omitempty"` // 输出格式
-	Stop            any            `json:"stop,omitempty"`            // 一个 string 或最多包含 16 个 string 的 list,在遇到这些词时,API 将停止生成更多的 token.
-	Stream          bool           `json:"stream,omitempty"`          // 如果设置为 True,将会以 SSE（server-sent events）的形式以流式发送消息增量.消息流以 data: [DONE] 结尾.
-	StreamOptions   StreamOptions  `json:"stream_options,omitempty"`  // 对话流式请求配置
-	Temperature     float64        `json:"temperature,omitempty"`     // 采样温度,介于 0 和 2 之间.更高的值,如 0.8,会使输出更随机,而更低的值,如 0.2,会使其更加集中和确定. 我们通常建议可以更改这个值或者更改 top_p,但不建议同时对两者进行修改.
-	TopP            float64        `json:"top_p,omitempty"`           // 作为调节采样温度的替代方案,模型会考虑前 top_p 概率的 token 的结果.所以 0.1 就意味着只有包括在最高 10% 概率中的 token 会被考虑. 我们通常建议修改这个值或者更改 temperature,但不建议同时对两者进行修改.
-	Tools           []Tool         `json:"tools,omitempty"`
-	ToolChoice      interface{}    `json:"tool_choice,omitempty"`
-	Logprobs        bool           `json:"logprobs,omitempty"`     // 是否返回所输出 token 的对数概率.如果为 true,则在 message 的 content 中返回每个输出 token 的对数概率.
-	TopLogprobs     int            `json:"top_logprobs,omitempty"` // 一个介于 0 到 20 之间的整数 N,指定每个输出位置返回输出概率 top N 的 token,且返回这些 token 的对数概率.指定此参数时,logprobs 必须为 true.
+	PresencePenalty float64         `json:"presence_penalty,omitempty"`
+	ResponseFormat  *ResponseFormat `json:"response_format,omitempty"` // 输出格式
+	Stop            any             `json:"stop,omitempty"`            // 一个 string 或最多包含 16 个 string 的 list,在遇到这些词时,API 将停止生成更多的 token.
+	Stream          bool            `json:"stream,omitempty"`          // 如果设置为 True,将会以 SSE（server-sent events）的形式以流式发送消息增量.消息流以 data: [DONE] 结尾.
+	StreamOptions   *StreamOptions  `json:"stream_options,omitempty"`  // 对话流式请求配置
+	Temperature     float64         `json:"temperature,omitempty"`     // 采样温度,介于 0 和 2 之间.更高的值,如 0.8,会使输出更随机,而更低的值,如 0.2,会使其更加集中和确定. 我们通常建议可以更改这个值或者更改 top_p,但不建议同时对两者进行修改.
+	TopP            float64         `json:"top_p,omitempty"`           // 作为调节采样温度的替代方案,模型会考虑前 top_p 概率的 token 的结果.所以 0.1 就意味着只有包括在最高 10% 概率中的 token 会被考虑. 我们通常建议修改这个值或者更改 temperature,但不建议同时对两者进行修改.
+	Tools           []Tool          `json:"tools,omitempty"`
+	ToolChoice      any             `json:"tool_choice,omitempty"`
+	Logprobs        bool            `json:"logprobs,omitempty"`     // 是否返回所输出 token 的对数概率.如果为 true,则在 message 的 content 中返回每个输出 token 的对数概率.
+	TopLogprobs     int             `json:"top_logprobs,omitempty"` // 一个介于 0 到 20 之间的整数 N,指定每个输出位置返回输出概率 top N 的 token,且返回这些 token 的对数概率.指定此参数时,logprobs 必须为 true.
 }
 
 // TopLogprobs 输出token对数概率信息
