@@ -1,2 +1,2 @@
 # dpsk
-deep seek api
+deepseek api
