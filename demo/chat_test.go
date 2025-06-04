@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/miajio/dpsk"
+	"github.com/miajio/dpsk/chat"
 )
 
 const (
@@ -53,13 +54,13 @@ func TestChat(t *testing.T) {
 		return
 	}
 
-	chatReq := dpsk.ChatRequest{
-		Model: "deepseek-chat",
-		Messages: []dpsk.Message{
-			{Role: "system", Content: "你是一个超级人工智能, 擅长于计算机网络领域"},
-			{Role: "user", Content: "你好, 我是一名go语言程序员, 你能帮我实现一个基于go语言封装的deepseek的sdk吗? 我需要简单易用, deepseek的api网站是https://api-docs.deepseek.com"},
-		},
-		Stream: false,
+	chatReq, err := chat.NewChatRequest(chat.WithModel("deepseek-chat"), chat.WithMessages([]chat.Message{
+		{Role: "system", Content: "你是一个情感ai程序"},
+		{Role: "user", Content: "你好,我叫小明"},
+	}...))
+	if err != nil {
+		fmt.Println("failed to create chat request:", err)
+		return
 	}
 
 	res, err := client.Chat(context.Background(), chatReq)
@@ -78,15 +79,18 @@ func TestChatStream(t *testing.T) {
 		return
 	}
 
-	defaultMessage := []dpsk.Message{
-		{Role: "system", Content: "你是一个情感ai程序"},
-		{Role: "user", Content: "你好,我叫小明"},
-	}
+	chatReq, err := chat.NewChatRequest(
+		chat.WithModel("deepseek-chat"),
+		chat.WithMessages([]chat.Message{
+			{Role: "system", Content: "你是一个情感ai程序"},
+			{Role: "user", Content: "你好,我叫小明"},
+		}...),
+		chat.WithStream(true),
+	)
 
-	chatReq := dpsk.ChatRequest{
-		Model:    "deepseek-chat",
-		Messages: defaultMessage,
-		Stream:   true,
+	if err != nil {
+		fmt.Println("failed to create chat request:", err)
+		return
 	}
 
 	chatStream, chatStreamErr, err := client.ChatStream(context.Background(), chatReq)
@@ -117,9 +121,8 @@ func TestChatStream(t *testing.T) {
 		}
 	}
 NextA:
-	defaultMessage = append(defaultMessage, dpsk.Message{Role: "assistant", Content: nextContent})
-	defaultMessage = append(defaultMessage, dpsk.Message{Role: "user", Content: "你喜欢听歌么?我最近很emo,想听听让我开心的歌"})
-	chatReq.Messages = defaultMessage
+	chatReq.AddMessage("assistant", nextContent)
+	chatReq.AddMessage("user", "你喜欢听歌么?我最近很emo,想听听让我开心的歌")
 
 	chatStream, chatStreamErr, err = client.ChatStream(context.Background(), chatReq)
 	if err != nil {
@@ -149,9 +152,8 @@ NextA:
 		}
 	}
 NextB:
-	defaultMessage = append(defaultMessage, dpsk.Message{Role: "assistant", Content: nextContent})
-	defaultMessage = append(defaultMessage, dpsk.Message{Role: "user", Content: "我是和女朋友吵架了, 她因为我在六一儿童节没有给她送礼物而不开心,我该怎么办?"})
-	chatReq.Messages = defaultMessage
+	chatReq.AddMessage("assistant", nextContent)
+	chatReq.AddMessage("user", "我是和女朋友吵架了, 她因为我在六一儿童节没有给她送礼物而不开心,我该怎么办?")
 
 	chatStream, chatStreamErr, err = client.ChatStream(context.Background(), chatReq)
 	if err != nil {

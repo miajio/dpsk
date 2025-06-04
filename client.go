@@ -12,6 +12,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/miajio/dpsk/chat"
 )
 
 const (
@@ -62,8 +64,6 @@ func (c *Client) makeRequest(ctx context.Context, method, endpoint string, body 
 		reqBody = bytes.NewBuffer(jsonBody)
 	}
 
-	fmt.Println("request body is:", reqBody)
-
 	req, err := http.NewRequestWithContext(ctx, method, c.baseUrl+endpoint, reqBody)
 	if err != nil {
 		return nil, err
@@ -113,11 +113,11 @@ func (c *Client) GetBalance(ctx context.Context) (*Balance, error) {
 }
 
 // Chat 发送聊天请求
-func (c *Client) Chat(ctx context.Context, req ChatRequest) (*ChatCompletion, error) {
+func (c *Client) Chat(ctx context.Context, req *chat.ChatRequest) (*chat.ChatResponse, error) {
 	if req.Stream {
 		return nil, errors.New("streaming is not supported, use ChatStream instead")
 	}
-	resp, err := c.makeRequest(ctx, http.MethodPost, "/chat/completions", &req)
+	resp, err := c.makeRequest(ctx, http.MethodPost, "/chat/completions", req)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (c *Client) Chat(ctx context.Context, req ChatRequest) (*ChatCompletion, er
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to chat: %s", resp.Status)
 	}
-	var completion ChatCompletion
+	var completion chat.ChatResponse
 	if err := json.NewDecoder(resp.Body).Decode(&completion); err != nil {
 		return nil, err
 	}
@@ -133,12 +133,12 @@ func (c *Client) Chat(ctx context.Context, req ChatRequest) (*ChatCompletion, er
 }
 
 // ChatStream 发送流式请求
-func (c *Client) ChatStream(ctx context.Context, req ChatRequest) (<-chan ChatCompletion, <-chan error, error) {
+func (c *Client) ChatStream(ctx context.Context, req *chat.ChatRequest) (<-chan chat.ChatResponse, <-chan error, error) {
 	if !req.Stream {
 		return nil, nil, errors.New("stream is not enabled")
 	}
 
-	resp, err := c.makeRequest(ctx, http.MethodPost, "/chat/completions", &req)
+	resp, err := c.makeRequest(ctx, http.MethodPost, "/chat/completions", req)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -148,7 +148,7 @@ func (c *Client) ChatStream(ctx context.Context, req ChatRequest) (<-chan ChatCo
 	}
 
 	errChan := make(chan error, 1)
-	resChain := make(chan ChatCompletion)
+	resChain := make(chan chat.ChatResponse)
 
 	go func() {
 		defer resp.Body.Close()
@@ -169,7 +169,7 @@ func (c *Client) ChatStream(ctx context.Context, req ChatRequest) (<-chan ChatCo
 			}
 
 			jsonData := strings.TrimPrefix(line, "data: ")
-			var event ChatCompletion
+			var event chat.ChatResponse
 			if err := json.Unmarshal([]byte(jsonData), &event); err != nil {
 				log.Printf("failed to parse response: %s, error: %v", jsonData, err)
 				errChan <- fmt.Errorf("failed to parse response: %s", err)
