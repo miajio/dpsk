@@ -3,6 +3,38 @@ package chat
 // Option 配置项
 type ChatOption func(*ChatRequest)
 
+var (
+	// 创意写作配置
+	WithCreativeWritingOption = func() ChatOption {
+		return func(req *ChatRequest) {
+			req.Temperature = 1.2
+			req.TopP = 0.95
+			req.FrequencyPenalty = 0.3
+			req.PresencePenalty = 0.5
+		}
+	}
+
+	// 技术问答配置
+	WithTechnicalQuestionOption = func() ChatOption {
+		return func(req *ChatRequest) {
+			req.Temperature = 0.3
+			req.TopP = 0.7
+			req.FrequencyPenalty = 0.7
+			req.PresencePenalty = 0.3
+		}
+	}
+
+	// 多轮对话配置
+	WithMultipleDialogueOption = func() ChatOption {
+		return func(req *ChatRequest) {
+			req.Temperature = 0.8
+			req.TopP = 0.9
+			req.FrequencyPenalty = 0.4
+			req.PresencePenalty = 0.2
+		}
+	}
+)
+
 func NewChatRequest(options ...ChatOption) (*ChatRequest, error) {
 	chatReq := &ChatRequest{
 		Stream: false,
