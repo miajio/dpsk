@@ -17,22 +17,31 @@ import (
 )
 
 const (
-	// BaseUrl 默认地址
-	BaseUrl = "https://api.deepseek.com/"
+	// baseUrl 默认地址
+	baseUrl            = "https://api.deepseek.com/"
+	modelsUrl          = "/models"
+	balanceUrl         = "/user/balance"
+	chatCompletionsUrl = "/chat/completions"
 )
 
 // Client 客户端
 type Client struct {
-	apiKey     string       // apiKey
-	httpClient *http.Client // http client
-	baseUrl    string       //  base url
+	apiKey             string       // apiKey
+	httpClient         *http.Client // http client
+	baseUrl            string       //  base url
+	modelsUrl          string       // 分页查询模型列表的url 默认 /models
+	balanceUrl         string       // 获取账户余额的url 默认 /user/balance
+	chatCompletionsUrl string       // 对话请求的url 默认 /chat/completions
 }
 
 // NewClient 创建客户端
 func NewClient(options ...Option) (*Client, error) {
 	cfg := &Config{
-		Timeout: 30 * time.Second,
-		BaseUrl: BaseUrl,
+		Timeout:            30 * time.Second,
+		BaseUrl:            baseUrl,
+		ModelsUrl:          modelsUrl,
+		BalanceUrl:         balanceUrl,
+		ChatCompletionsUrl: chatCompletionsUrl,
 	}
 
 	for _, option := range options {
@@ -78,7 +87,7 @@ func (c *Client) makeRequest(ctx context.Context, method, endpoint string, body 
 
 // GetModels 获取模型列表
 func (c *Client) GetModels(ctx context.Context) (*ModelList, error) {
-	resp, err := c.makeRequest(ctx, http.MethodGet, "/models", nil)
+	resp, err := c.makeRequest(ctx, http.MethodGet, c.modelsUrl, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +105,7 @@ func (c *Client) GetModels(ctx context.Context) (*ModelList, error) {
 
 // GetBalance 获取账户余额
 func (c *Client) GetBalance(ctx context.Context) (*Balance, error) {
-	resp, err := c.makeRequest(ctx, http.MethodGet, "/user/balance", nil)
+	resp, err := c.makeRequest(ctx, http.MethodGet, c.balanceUrl, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +126,7 @@ func (c *Client) Chat(ctx context.Context, req *chat.ChatRequest) (*chat.ChatRes
 	if req.Stream {
 		return nil, errors.New("streaming is not supported, use ChatStream instead")
 	}
-	resp, err := c.makeRequest(ctx, http.MethodPost, "/chat/completions", req)
+	resp, err := c.makeRequest(ctx, http.MethodPost, c.chatCompletionsUrl, req)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +147,7 @@ func (c *Client) ChatStream(ctx context.Context, req *chat.ChatRequest) (<-chan 
 		return nil, nil, errors.New("stream is not enabled")
 	}
 
-	resp, err := c.makeRequest(ctx, http.MethodPost, "/chat/completions", req)
+	resp, err := c.makeRequest(ctx, http.MethodPost, c.chatCompletionsUrl, req)
 	if err != nil {
 		return nil, nil, err
 	}
