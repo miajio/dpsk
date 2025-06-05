@@ -4,13 +4,12 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
 
 	"github.com/miajio/dpsk/chat"
+	"github.com/miajio/dpsk/errors"
 	"github.com/miajio/dpsk/model"
 )
 
@@ -22,7 +21,7 @@ func (c *Client) GetModels(ctx context.Context) (*model.ModelList, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get models: %s", resp.Status)
+		return nil, errors.NewCodeErrorF(resp.StatusCode, "failed to get models: %s", resp.Status)
 	}
 
 	var modelList model.ModelList
@@ -40,7 +39,7 @@ func (c *Client) GetBalance(ctx context.Context) (*model.Balance, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get balance: %s", resp.Status)
+		return nil, errors.NewCodeErrorF(resp.StatusCode, "failed to get balance: %s", resp.Status)
 	}
 
 	var balance model.Balance
@@ -53,7 +52,7 @@ func (c *Client) GetBalance(ctx context.Context) (*model.Balance, error) {
 // Chat 发送消息到模型
 func (c *Client) Chat(ctx context.Context, req *chat.ChatRequest) (*chat.ChatResponse, error) {
 	if req.Stream {
-		return nil, errors.New("streaming is not supported, use ChatStream instead")
+		return nil, errors.NewCodeError(http.StatusBadRequest, "streaming is not supported, use ChatStream instead")
 	}
 	resp, err := c.makeRequest(ctx, http.MethodPost, c.apiUrl+c.urlMap["chat"], req)
 	if err != nil {
@@ -61,7 +60,7 @@ func (c *Client) Chat(ctx context.Context, req *chat.ChatRequest) (*chat.ChatRes
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to chat: %s", resp.Status)
+		return nil, errors.NewCodeErrorF(resp.StatusCode, "failed to chat: %s", resp.Status)
 	}
 	var completion chat.ChatResponse
 	if err := json.NewDecoder(resp.Body).Decode(&completion); err != nil {
@@ -73,7 +72,7 @@ func (c *Client) Chat(ctx context.Context, req *chat.ChatRequest) (*chat.ChatRes
 // ChatStream 发送流式请求
 func (c *Client) ChatStream(ctx context.Context, req *chat.ChatRequest) (<-chan chat.ChatResponse, <-chan error, error) {
 	if !req.Stream {
-		return nil, nil, errors.New("stream is not enabled")
+		return nil, nil, errors.NewCodeError(http.StatusBadRequest, "stream is not enabled")
 	}
 
 	resp, err := c.makeRequest(ctx, http.MethodPost, c.apiUrl+c.urlMap["chat"], req)
@@ -82,7 +81,7 @@ func (c *Client) ChatStream(ctx context.Context, req *chat.ChatRequest) (<-chan 
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, nil, fmt.Errorf("failed to chat stream: %s", resp.Status)
+		return nil, nil, errors.NewCodeErrorF(resp.StatusCode, "failed to chat stream: %s", resp.Status)
 	}
 
 	errChan := make(chan error, 1)
@@ -102,7 +101,7 @@ func (c *Client) ChatStream(ctx context.Context, req *chat.ChatRequest) (<-chan 
 				return
 			}
 			if !strings.HasPrefix(line, "data: ") {
-				errChan <- fmt.Errorf("invalid response: %s", line)
+				errChan <- errors.NewCodeErrorF(http.StatusBadRequest, "invalid response: %s", line)
 				continue
 			}
 
@@ -110,13 +109,13 @@ func (c *Client) ChatStream(ctx context.Context, req *chat.ChatRequest) (<-chan 
 			var event chat.ChatResponse
 			if err := json.Unmarshal([]byte(jsonData), &event); err != nil {
 				log.Printf("failed to parse response: %s, error: %v", jsonData, err)
-				errChan <- fmt.Errorf("failed to parse response: %s", err)
+				errChan <- errors.NewCodeErrorF(http.StatusBadRequest, "failed to parse response: %v", err)
 				continue
 			}
 			resChain <- event
 		}
 		if err := scanner.Err(); err != nil {
-			errChan <- fmt.Errorf("scanner error: %w", err)
+			errChan <- errors.NewCodeErrorF(http.StatusBadRequest, "scanner error: %v", err)
 		}
 	}()
 	return resChain, errChan, nil

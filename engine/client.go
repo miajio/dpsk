@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/miajio/dpsk/errors"
 )
 
 const (
@@ -81,7 +82,7 @@ func (c *Client) WithTimeout(timeout time.Duration) *Client {
 // makeRequest 创建请求
 func (c *Client) makeRequest(ctx context.Context, method string, url string, body any) (*http.Response, error) {
 	if c.apiKey == "" {
-		return nil, errors.New("api key is required")
+		return nil, errors.NewCodeError(http.StatusBadRequest, "api key is required")
 	}
 
 	var reqBody io.Reader
