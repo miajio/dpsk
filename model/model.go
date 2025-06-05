@@ -1,4 +1,4 @@
-package dpsk
+package model
 
 // Model 模型结构体
 type Model struct {

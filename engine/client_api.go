@@ -1,93 +1,22 @@
-package dpsk
+package engine
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/miajio/dpsk/chat"
+	"github.com/miajio/dpsk/model"
 )
-
-const (
-	// baseUrl 默认地址
-	baseUrl            = "https://api.deepseek.com/"
-	modelsUrl          = "/models"
-	balanceUrl         = "/user/balance"
-	chatCompletionsUrl = "/chat/completions"
-)
-
-// Client 客户端
-type Client struct {
-	apiKey             string       // apiKey
-	httpClient         *http.Client // http client
-	baseUrl            string       //  base url
-	modelsUrl          string       // 分页查询模型列表的url 默认 /models
-	balanceUrl         string       // 获取账户余额的url 默认 /user/balance
-	chatCompletionsUrl string       // 对话请求的url 默认 /chat/completions
-}
-
-// NewClient 创建客户端
-func NewClient(options ...Option) (*Client, error) {
-	cfg := &Config{
-		Timeout:            30 * time.Second,
-		BaseUrl:            baseUrl,
-		ModelsUrl:          modelsUrl,
-		BalanceUrl:         balanceUrl,
-		ChatCompletionsUrl: chatCompletionsUrl,
-	}
-
-	for _, option := range options {
-		option(cfg)
-	}
-
-	if cfg.ApiKey == "" {
-		return nil, errors.New("apiKey is required")
-	}
-
-	client := Client{
-		httpClient: &http.Client{
-			Timeout: cfg.Timeout,
-		},
-		apiKey:  cfg.ApiKey,
-		baseUrl: cfg.BaseUrl,
-	}
-	return &client, nil
-}
-
-// makeRequest 创建请求
-func (c *Client) makeRequest(ctx context.Context, method, endpoint string, body any) (*http.Response, error) {
-	var reqBody io.Reader
-	if body != nil {
-		jsonBody, err := json.Marshal(body)
-		if err != nil {
-			return nil, err
-		}
-		reqBody = bytes.NewBuffer(jsonBody)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, method, c.baseUrl+endpoint, reqBody)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Authorization", "Bearer "+c.apiKey)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
-	return c.httpClient.Do(req)
-}
 
 // GetModels 获取模型列表
-func (c *Client) GetModels(ctx context.Context) (*ModelList, error) {
-	resp, err := c.makeRequest(ctx, http.MethodGet, c.modelsUrl, nil)
+func (c *Client) GetModels(ctx context.Context) (*model.ModelList, error) {
+	resp, err := c.makeRequest(ctx, http.MethodGet, c.apiUrl+c.urlMap["models"], nil)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +25,7 @@ func (c *Client) GetModels(ctx context.Context) (*ModelList, error) {
 		return nil, fmt.Errorf("failed to get models: %s", resp.Status)
 	}
 
-	var modelList ModelList
+	var modelList model.ModelList
 	if err := json.NewDecoder(resp.Body).Decode(&modelList); err != nil {
 		return nil, err
 	}
@@ -104,8 +33,8 @@ func (c *Client) GetModels(ctx context.Context) (*ModelList, error) {
 }
 
 // GetBalance 获取账户余额
-func (c *Client) GetBalance(ctx context.Context) (*Balance, error) {
-	resp, err := c.makeRequest(ctx, http.MethodGet, c.balanceUrl, nil)
+func (c *Client) GetBalance(ctx context.Context) (*model.Balance, error) {
+	resp, err := c.makeRequest(ctx, http.MethodGet, c.apiUrl+c.urlMap["balance"], nil)
 	if err != nil {
 		return nil, err
 	}
@@ -114,19 +43,19 @@ func (c *Client) GetBalance(ctx context.Context) (*Balance, error) {
 		return nil, fmt.Errorf("failed to get balance: %s", resp.Status)
 	}
 
-	var balance Balance
+	var balance model.Balance
 	if err := json.NewDecoder(resp.Body).Decode(&balance); err != nil {
 		return nil, err
 	}
 	return &balance, nil
 }
 
-// Chat 发送聊天请求
+// Chat 发送消息到模型
 func (c *Client) Chat(ctx context.Context, req *chat.ChatRequest) (*chat.ChatResponse, error) {
 	if req.Stream {
 		return nil, errors.New("streaming is not supported, use ChatStream instead")
 	}
-	resp, err := c.makeRequest(ctx, http.MethodPost, c.chatCompletionsUrl, req)
+	resp, err := c.makeRequest(ctx, http.MethodPost, c.apiUrl+c.urlMap["chat"], req)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +76,7 @@ func (c *Client) ChatStream(ctx context.Context, req *chat.ChatRequest) (<-chan 
 		return nil, nil, errors.New("stream is not enabled")
 	}
 
-	resp, err := c.makeRequest(ctx, http.MethodPost, c.chatCompletionsUrl, req)
+	resp, err := c.makeRequest(ctx, http.MethodPost, c.apiUrl+c.urlMap["chat"], req)
 	if err != nil {
 		return nil, nil, err
 	}
