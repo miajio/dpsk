@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/miajio/dpsk"
 	"github.com/miajio/dpsk/chat"
+	"github.com/miajio/dpsk/engine"
 )
 
 const (
@@ -17,7 +17,7 @@ const (
 )
 
 func TestGetModel(t *testing.T) {
-	client, err := dpsk.NewClient(dpsk.WithApiKey(API_KEY), dpsk.WithTimeout(30*time.Second))
+	client, err := engine.NewClient(engine.WithApiKey(API_KEY), engine.WithTimeout(30*time.Second))
 	if err != nil {
 		fmt.Println("failed to create client:", err)
 		return
@@ -33,7 +33,7 @@ func TestGetModel(t *testing.T) {
 }
 
 func TestGetBalance(t *testing.T) {
-	client, err := dpsk.NewClient(dpsk.WithApiKey(API_KEY), dpsk.WithTimeout(30*time.Second))
+	client, err := engine.NewClient(engine.WithApiKey(API_KEY), engine.WithTimeout(30*time.Second))
 	if err != nil {
 		fmt.Println("failed to create client:", err)
 		return
@@ -48,7 +48,7 @@ func TestGetBalance(t *testing.T) {
 }
 
 func TestChat(t *testing.T) {
-	client, err := dpsk.NewClient(dpsk.WithApiKey(API_KEY), dpsk.WithTimeout(24*time.Hour))
+	client, err := engine.NewClient(engine.WithApiKey(API_KEY), engine.WithTimeout(24*time.Hour))
 	if err != nil {
 		fmt.Println("failed to create client:", err)
 		return
@@ -73,7 +73,7 @@ func TestChat(t *testing.T) {
 }
 
 func TestChatStream(t *testing.T) {
-	client, err := dpsk.NewClient(dpsk.WithApiKey(API_KEY), dpsk.WithTimeout(24*time.Hour))
+	client, err := engine.NewClient(engine.WithApiKey(API_KEY), engine.WithTimeout(24*time.Hour))
 	if err != nil {
 		fmt.Println("failed to create client:", err)
 		return

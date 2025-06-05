@@ -1,6 +1,10 @@
 package chat
 
-import "fmt"
+import (
+	"net/http"
+
+	"github.com/miajio/dpsk/errors"
+)
 
 // ChatReq 对话请求
 type ChatRequest struct {
@@ -32,7 +36,7 @@ func (cr *ChatRequest) Validate() error {
 	}
 
 	if cr.Model == "" {
-		return fmt.Errorf("model is required")
+		return errors.NewCodeError(http.StatusBadRequest, "model is required")
 	}
 
 	return nil
@@ -72,10 +76,10 @@ type Message struct {
 // Validate 验证消息参数
 func (m *Message) Validate() error {
 	if m.Role == "" {
-		return fmt.Errorf("role is required")
+		return errors.NewCodeError(http.StatusBadRequest, "role is required")
 	}
 	if m.Content == "" {
-		return fmt.Errorf("content is required")
+		return errors.NewCodeError(http.StatusBadRequest, "content is required")
 	}
 	return nil
 }

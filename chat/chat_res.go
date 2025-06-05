@@ -15,6 +15,7 @@ type Content struct {
 	TopLogprobs []TopLogprobs `json:"top_logprobs"` // 一个包含在该输出位置上，输出概率 top N 的 token 的列表，以及它们的对数概率。在罕见情况下，返回的 token 数量可能少于请求参数中指定的 top_logprobs 值。
 }
 
+// Logprobs 对数概率信息
 type Logprobs struct {
 	Content []Content `json:"content"` // 一个包含输出 token 对数概率信息的列表
 }
