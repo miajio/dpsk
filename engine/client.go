@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	apiUrl = "https://api.openai.com/v1"
+	apiUrl = "https://api.deepseek.com"
 )
 
 var (
