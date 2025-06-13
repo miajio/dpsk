@@ -27,7 +27,7 @@ type ChatRequest struct {
 
 // Validate 验证请求参数
 func (cr *ChatRequest) Validate() error {
-	if cr.Messages != nil && len(cr.Messages) > 0 {
+	if len(cr.Messages) > 0 {
 		for _, msg := range cr.Messages {
 			if err := msg.Validate(); err != nil {
 				return err
